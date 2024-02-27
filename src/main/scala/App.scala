@@ -11,25 +11,26 @@ object App{
     val spark = SparkSession.builder().appName("Read Csv File").master("local").getOrCreate()
     //To bypass the Hadoop local FileSystem specify that I want to use the Bare Local File System
     spark.sparkContext.hadoopConfiguration.setClass("fs.file.impl",classOf[BareLocalFileSystem], classOf[FileSystem])
-    //spark.sparkContext.setLogLevel("ERROR")
+    spark.sparkContext.setLogLevel("ERROR")
     //Specify that I want to use the legacy date format
     spark.conf.set("spark.sql.legacy.timeParserPolicy","LEGACY")
 
     //Read the googleplaystore_user_reviews.csv
     val df_reviews = spark.read
-      .format("csv")
-      .option("header", "true")
-      .option("quote", "\"")
-      .option("escape", "\"")
-      .load("src/Files/googleplaystore_user_reviews.csv")
+        .format("csv")
+        .option("header", "true")
+        .option("quote", "\"")
+        .option("escape", "\"")
+        .load(getClass.getResource("/googleplaystore_user_reviews.csv").getPath())
 
-    //Read the googleplaystore.csv
-    val df_apps = spark.read
-      .format("csv")
-      .option("header", "true")
-      .option("quote", "\"")
-      .option("escape", "\"")
-      .load("src/Files/googleplaystore.csv")
+      //Read the googleplaystore.csv
+      val df_apps = spark.read
+        .format("csv")
+        .option("header", "true")
+        .option("quote", "\"")
+        .option("escape", "\"")
+        .load(getClass.getResource("/googleplaystore.csv").getPath())
+
 
     //Run the fuctions, each corresponding to a different part
     val df_1 = part1(df_reviews)
@@ -194,8 +195,6 @@ object App{
       format("parquet").
       option("compression", "gzip").
       parquet(desktop_path)
-
-    df_final.show()
 
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     val file = fs.globStatus(new Path(desktop_path + "part*"))(0).getPath().getName()
